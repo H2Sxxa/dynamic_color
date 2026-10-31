@@ -2,13 +2,12 @@
 name = "dynamic-color"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85"
-description = "Lightweight access to the operating system's dynamic accent color"
+description = "Lightweight cross-platform access to dynamic system accent colors and Material 3 palettes"
 license = "MIT"
 readme = "README.md"
 documentation = "https://docs.rs/dynamic-color"
-keywords = ["dynamic-color", "accent-color", "material-you", "desktop"]
-categories = ["gui", "os"]
+keywords = ["dynamic-color", "material-you", "accent-color", "android", "tauri"]
+categories = ["api-bindings", "gui", "os"]
 include = ["src/**", "examples/**", "README.md", "LICENSE"]
 
 [features]
@@ -24,8 +23,7 @@ tauri = ["dep:tauri", "serde"]
 serde = { version = "1.0", features = ["derive"], optional = true }
 tauri = { version = "2", default-features = false, optional = true }
 
-# 0.5 requires Rust 1.97; stay on the 0.4 API to preserve this crate's MSRV.
-material-colors = { version = "0.4.2", default-features = false, features = ["std"], optional = true }
+material-colors = { version = "0.5.0", default-features = false, features = ["std"], optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.62", features = ["UI_ViewManagement"] }

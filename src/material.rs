@@ -6,6 +6,8 @@
 //! generate the same palette structure from any accent seed.
 
 use crate::AccentColor;
+#[cfg(feature = "seed")]
+pub use material_colors;
 
 /// A Material 3 tone available from the Android system palette.
 #[repr(u16)]
@@ -154,16 +156,19 @@ impl CorePalette {
     #[cfg(feature = "seed")]
     #[must_use]
     pub fn from_seed(seed: AccentColor) -> Self {
-        let source = material_colors::palette::CorePalette::of(
-            material_colors::color::Argb::from_u32(seed.argb()),
+        let source = material_colors::dynamic_color::DynamicScheme::by_variant(
+            material_colors::color::Rgb::new(seed.red(), seed.green(), seed.blue()),
+            &material_colors::dynamic_color::Variant::TonalSpot,
+            false,
+            None,
         );
 
         Self::new(
-            tonal_palette_from_material(&source.primary),
-            tonal_palette_from_material(&source.secondary),
-            tonal_palette_from_material(&source.tertiary),
-            tonal_palette_from_material(&source.neutral),
-            tonal_palette_from_material(&source.neutral_variant),
+            tonal_palette_from_material(&source.primary_palette),
+            tonal_palette_from_material(&source.secondary_palette),
+            tonal_palette_from_material(&source.tertiary_palette),
+            tonal_palette_from_material(&source.neutral_palette),
+            tonal_palette_from_material(&source.neutral_variant_palette),
         )
     }
 
@@ -272,12 +277,7 @@ impl CorePalette {
 fn tonal_palette_from_material(palette: &material_colors::palette::TonalPalette) -> TonalPalette {
     TonalPalette::new(TONES.map(|tone| {
         let color = palette.tone(i32::from(tone.value()));
-        AccentColor::from_argb(
-            (u32::from(color.alpha) << 24)
-                | (u32::from(color.red) << 16)
-                | (u32::from(color.green) << 8)
-                | u32::from(color.blue),
-        )
+        AccentColor::from_rgb(color.red, color.green, color.blue)
     }))
 }
 

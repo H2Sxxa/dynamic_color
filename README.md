@@ -29,7 +29,7 @@ The crate has no default features.
 | --- | --- | --- |
 | `serde` | No | Adds serialization support for colors, palettes, schemes, and command errors. |
 | `material` | No | Adds `CorePalette`, `TonalPalette`, `Tone`, and `ColorScheme` without an external palette dependency. On Android, also exposes the exact 65 system colors. |
-| `seed` | No | Generates a core palette and schemes from any accent seed. Implies `material` and adds `material-colors` 0.4.x. |
+| `seed` | No | Generates a core palette and schemes from any accent seed. Implies `material` and adds `material-colors` 0.5. |
 | `android-activity` | No | Adds Android adapters for applications using `android-activity` 0.6. |
 | `gtk` | No | Adds a Linux-only GTK 0.18 helper for reading the active theme's selected background color. |
 | `tauri` | No | Adds a Tauri 2 command returning `#rrggbb`. Implies `serde`. |
@@ -197,13 +197,13 @@ let palette = CorePalette::from_seed(seed);
 let scheme = palette.dark_scheme();
 ```
 
-Seed generation uses `material-colors` 0.4.x and the existing legacy `Scheme`
+Seed generation uses `material-colors` 0.5 and the existing legacy `Scheme`
 role mapping. It does not synthesize newer Material 3 surface-container roles.
 On Android, prefer `android::core_palette()` when the exact system colors must
 be preserved instead of being regenerated from a seed.
 
-Version 0.5 of `material-colors` requires Rust 1.97, while this crate keeps its
-Rust 1.85 MSRV. The dependency remains optional.
+The `seed` feature is enabled by default and uses `material-colors` 0.5, which
+requires Rust 1.97.
 
 ## Tauri feature
 
@@ -301,8 +301,7 @@ standard error tones for the four error roles.
 
 ## MSRV
 
-The minimum supported Rust version is 1.85. The `seed` feature uses
-`material-colors` 0.4.x to preserve that MSRV.
+The minimum supported Rust version is 1.97, matching `material-colors` 0.5.
 
 ## License
 
