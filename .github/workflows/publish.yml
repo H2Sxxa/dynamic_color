@@ -53,6 +53,9 @@ jobs:
 
       - name: Check package
         run: cargo package --locked
+  
+      - name: Login
+        run: cargo login ${{ secrets.CARGO_TOKEN }} --verbose
 
       - name: Publish dry run
         if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true
