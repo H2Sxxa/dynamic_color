@@ -1,0 +1,156 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  formatting:
+    name: Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.85.0
+        with:
+          components: rustfmt
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+            features: serde,material,seed,gtk
+            target: ""
+            test: true
+            install_gtk: true
+          - name: Windows
+            os: windows-latest
+            features: serde,material,seed,tauri
+            target: ""
+            test: true
+            install_gtk: false
+          - name: macOS
+            os: macos-latest
+            features: serde,material,seed,tauri
+            target: ""
+            test: true
+            install_gtk: false
+          - name: Android default
+            os: ubuntu-latest
+            features: ""
+            target: aarch64-linux-android
+            test: false
+            install_gtk: false
+          - name: Android features
+            os: ubuntu-latest
+            features: android-activity,android-activity/native-activity,material,seed
+            target: aarch64-linux-android
+            test: false
+            install_gtk: false
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        if: matrix.target == ''
+        uses: dtolnay/rust-toolchain@1.85.0
+        with:
+          components: clippy
+
+      - name: Install Rust with cross-compilation target
+        if: matrix.target != ''
+        uses: dtolnay/rust-toolchain@1.85.0
+        with:
+          components: clippy
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install Linux dependencies
+        if: matrix.install_gtk
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libgtk-3-dev pkg-config
+
+      - name: Check default features
+        if: matrix.target == ''
+        run: cargo check --locked --all-targets
+
+      - name: Check Android default features
+        if: matrix.target != '' && matrix.features == ''
+        run: >-
+          cargo check --locked --target ${{ matrix.target }}
+          --no-default-features
+
+      - name: Check selected features
+        if: matrix.target == '' && matrix.features != ''
+        run: cargo check --locked --all-targets --features ${{ matrix.features }}
+
+      - name: Check Android selected features
+        if: matrix.target != '' && matrix.features != ''
+        run: >-
+          cargo check --locked --target ${{ matrix.target }}
+          --features ${{ matrix.features }}
+
+      - name: Run Clippy
+        if: matrix.target == '' && matrix.features != ''
+        run: cargo clippy --locked --all-targets --features ${{ matrix.features }} -- -D warnings
+
+      - name: Run Android Clippy
+        if: matrix.target != '' && matrix.features != ''
+        run: >-
+          cargo clippy --locked --target ${{ matrix.target }}
+          --features ${{ matrix.features }} -- -D warnings
+
+      - name: Run tests
+        if: matrix.test
+        run: cargo test --locked --all-targets --features ${{ matrix.features }}
+
+  package:
+    name: Package and docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --locked --no-deps --features serde,material,seed
+
+      - name: Package crate
+        run: cargo package --locked

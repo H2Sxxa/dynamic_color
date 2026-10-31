@@ -1,0 +1,42 @@
+[package]
+name = "dynamic-color"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Lightweight access to the operating system's dynamic accent color"
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/dynamic-color"
+keywords = ["dynamic-color", "accent-color", "material-you", "desktop"]
+categories = ["gui", "os"]
+include = ["src/**", "examples/**", "README.md", "LICENSE"]
+
+[features]
+default = []
+serde = ["dep:serde"]
+android-activity = ["dep:android-activity"]
+gtk = ["dep:gtk"]
+material = []
+seed = ["material", "dep:material-colors"]
+tauri = ["dep:tauri", "serde"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"], optional = true }
+tauri = { version = "2", default-features = false, optional = true }
+
+# 0.5 requires Rust 1.97; stay on the 0.4 API to preserve this crate's MSRV.
+material-colors = { version = "0.4.2", default-features = false, features = ["std"], optional = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.62", features = ["UI_ViewManagement"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-app-kit = { version = "0.3", features = ["NSColor", "NSColorSpace"] }
+
+# Tauri use GTK 0.18.2, for compatibility, we use the same version here. GTK 0.19 requires Rust 1.70, which is higher than this crate's MSRV.
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = { version = "0.18.2", optional = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android-activity = { version = "0.6.1", default-features = false, optional = true }
+jni = "0.22.4"
